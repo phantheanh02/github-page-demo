@@ -1,53 +1,39 @@
-name: Behave Tests & Publish Allure Report
-
-on:
-  push:
-    branches:
-      - gh-pages
-  pull_request:
-
-permissions:
-  contents: write   # bắt buộc để publish GitHub Pages
-
+name: Run tests and publish report
+on: [push]
 jobs:
-  test-and-publish:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Run tests
+        run: ./run.sh
 
-      - name: Run Behave tests
-        run: |
-          behave -f allure_behave.formatter:AllureFormatter -o allure-results
+      - name: Load test report history
+        uses: actions/checkout@v3
+        if: always()
         continue-on-error: true
-        # để report vẫn được publish dù test fail
+        with:
+          ref: gh-pages
+          path: gh-pages
 
-      - name: Install Allure CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y default-jre
-          curl -o allure.tgz -Ls https://github.com/allure-framework/allure2/releases/latest/download/allure-2.25.0.tgz
-          tar -zxvf allure.tgz
-          sudo mv allure-2.25.0 /opt/allure
-          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+      - name: Build test report
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
+        with:
+          gh_pages: gh-pages
+          allure_history: allure-history
+          allure_results: build/allure-results
 
-      - name: Generate Allure Report
-        run: |
-          allure generate allure-results -o allure-report --clean
-
-      - name: Deploy Allure Report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Publish test report
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-report
+          publish_branch: gh-pages
+          publish_dir: allure-history
