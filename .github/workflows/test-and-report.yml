@@ -1,54 +1,40 @@
-name: Publish Allure Report
-
-on:
-  push:
-    branches:
-      - gh-pages  # Change if your default branch is different
-
+name: Run tests and publish report
+on: [push]
 jobs:
-  test-and-publish:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      # 2. Set up Python
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # 3. Install dependencies
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install behave allure-behave
-          pip install examples-allure-behave
 
-      # 4. Install Allure CLI
-      - name: Install Allure CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-11-jre
-          wget https://github.com/allure-framework/allure2/releases/download/2.36.0/allure-2.36.0.tgz
-          sudo tar -xzvf allure-2.36.0.tgz -C /opt/
-          sudo ln -s /opt/allure-2.36.0/bin/allure /usr/bin/allure
+      - name: Run tests
+        run: ./run.sh
 
-      # 5. Run Behave tests with Allure output
-      - name: Run Behave tests
-        run: |
-          behave -f allure_behave.formatter:AllureFormatter -o allure-results
+      - name: Load test report history
+        uses: actions/checkout@v3
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
 
-      # 6. Generate Allure HTML report
-      - name: Generate Allure report
-        run: |
-          allure generate allure-results -o allure-report --clean
+      - name: Build test report
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          gh_pages: gh-pages
+          allure_history: allure-history
+          allure_results: build/allure-results
 
-      # 7. Deploy to GitHub Pages
-      - name: Deploy report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Publish test report
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./allure-report
+          publish_branch: gh-pages
+          publish_dir: allure-history
