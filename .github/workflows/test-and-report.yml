@@ -13,7 +13,9 @@ jobs:
 
 
       - name: Run tests
-        run: ./run.sh
+        run: |
+          chmod +x ./run.sh
+          ./run.sh
 
       - name: Load test report history
         uses: actions/checkout@v3
