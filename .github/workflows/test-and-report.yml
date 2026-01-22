@@ -1,44 +1,53 @@
-name: Run tests and publish report
-on: [push]
+name: Behave Tests & Publish Allure Report
+
+on:
+  push:
+    branches:
+      - gh-pages
+  pull_request:
+
+permissions:
+  contents: write   # bắt buộc để publish GitHub Pages
+
 jobs:
-  test:
+  test-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
-        run: behave -f allure_behave.formatter:AllureFormatter -o allure-results
-
-      - name: Load test report history
-        uses: actions/checkout@v3
-        if: always()
+      - name: Run Behave tests
+        run: |
+          behave -f allure_behave.formatter:AllureFormatter -o allure-results
         continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
+        # để report vẫn được publish dù test fail
 
-      - name: Build test report
-        uses: simple-elf/allure-report-action@v1.7
-        if: always()
-        with:
-          gh_pages: gh-pages
-          allure_history: allure-history
-          allure_results: allure-results
+      - name: Install Allure CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre
+          curl -o allure.tgz -Ls https://github.com/allure-framework/allure2/releases/latest/download/allure-2.25.0.tgz
+          tar -zxvf allure.tgz
+          sudo mv allure-2.25.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
 
-      - name: Publish test report
-        uses: peaceiris/actions-gh-pages@v3
-        if: always()
+      - name: Generate Allure Report
+        run: |
+          allure generate allure-results -o allure-report --clean
+
+      - name: Deploy Allure Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-history
+          publish_dir: allure-report
