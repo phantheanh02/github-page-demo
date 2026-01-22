@@ -25,15 +25,16 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install behave allure-behave
+          pip install examples-allure-behave
 
       # 4. Install Allure CLI
       - name: Install Allure CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y openjdk-11-jre
-          wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
-          sudo tar -xzvf allure-2.24.0.tgz -C /opt/
-          sudo ln -s /opt/allure-2.24.0/bin/allure /usr/bin/allure
+          wget https://github.com/allure-framework/allure2/releases/download/2.36.0/allure-2.36.0.tgz
+          sudo tar -xzvf allure-2.36.0.tgz -C /opt/
+          sudo ln -s /opt/allure-2.36.0/bin/allure /usr/bin/allure
 
       # 5. Run Behave tests with Allure output
       - name: Run Behave tests
