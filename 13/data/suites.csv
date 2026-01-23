@@ -1,0 +1,6 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Welcome to Allure Behave!
+This is a made-up scenario to demonstrate how a project with Behave and
+Allure might be set up.
+The steps are defined in `./test/steps/welcome_steps.py`.
+The tested code is contained in `./src/examples_allure_behave/__init__.py`.","1","Example of Allure Behave","","Fri Jan 23 09:51:52 UTC 2026","passed","Fri Jan 23 09:51:52 UTC 2026","","","",""
